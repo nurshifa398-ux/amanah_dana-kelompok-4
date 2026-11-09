@@ -1,0 +1,8 @@
+<?php
+require_once __DIR__ . '/Controller.php'; require_once __DIR__ . '/../models/Donatur.php';
+class DonaturController extends Controller {
+ public function __construct(){ $this->guard(); }
+ public function index():void{$m=new Donatur();$edit=null;$err=null;$action=$_GET['action']??'index';if($action==='edit'){$edit=$m->getById((int)($_GET['id']??0));if(!$edit){flash('Data donatur tidak ditemukan.','err');redirect('index.php?page=donatur');}}
+ if($_SERVER['REQUEST_METHOD']==='POST'){csrf_check();$pa=$_POST['form_action']??'create';try{if($pa==='delete'){$m->delete((int)($_POST['id']??0));flash('Donatur berhasil dihapus.');redirect('index.php?page=donatur');}$d=['nama'=>trim($_POST['nama']??''),'jenis'=>$_POST['jenis']??'individu','telepon'=>trim($_POST['telepon']??''),'alamat'=>trim($_POST['alamat']??'')];if($d['nama']==='')throw new RuntimeException('Nama donatur wajib diisi.');if(mb_strlen($d['nama'])>100||mb_strlen($d['telepon'])>20||mb_strlen($d['alamat'])>255)throw new RuntimeException('Nama maksimal 100 karakter, telepon 20, alamat 255.');if(!in_array($d['jenis'],['individu','lembaga'],true))throw new RuntimeException('Jenis donatur tidak valid.');if($pa==='update'){$m->update((int)($_POST['id']??0),$d);flash('Data donatur berhasil diperbarui.');}else{$m->create($d);flash('Donatur baru berhasil ditambahkan.');}redirect('index.php?page=donatur');}catch(Throwable $e){$err=$e instanceof RuntimeException?$e->getMessage():'Gagal menyimpan donatur.';if($pa==='update')$edit=$m->getById((int)($_POST['id']??0));}}
+ $this->view('donatur/index',['rows'=>$m->getAll(),'edit'=>$edit,'err'=>$err,'title'=>'Donatur']);}
+}
